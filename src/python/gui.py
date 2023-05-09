@@ -17,17 +17,17 @@ class MainApp(tk.Frame):
 
     #def create_widgets(self):
 
-def calculate():
+#def calculate():
     # Get input values from entry widgets
-    data = float(data_entry.get())
+    #data = float(data_entry.get())
 
     # Call the appropriate functions for calculations
-    probability_result = calc_probability(data)
-    hypothesis_testing_result = hypothesis_testing(data)
+    #probability_result = calc_probability(data)
+    #hypothesis_testing_result = hypothesis_testing(data)
 
     # Update the result labels with the calculated values
-    probability_result_label.config(text=f"Probability: {probability_result}")
-    hypothesis_testing_result_label.config(text=f"Hypothesis Testing: {hypothesis_testing_result}")
+    #probability_result_label.config(text=f"Probability: {probability_result}")
+    #hypothesis_testing_result_label.config(text=f"Hypothesis Testing: {hypothesis_testing_result}")
 
 def create_gui():
     # Create the main window
@@ -41,8 +41,8 @@ def create_gui():
     data_entry.grid(column=1, row=0, padx=10, pady=10, sticky=tk.W)
 
     # Create the Calculate button
-    calculate_button = ttk.Button(root, text="Calculate", command=calculate)
-    calculate_button.grid(column=0, row=2, columnspan=2, pady=10)
+    #calculate_button = ttk.Button(root, text="Calculate", command=calculate)
+    #calculate_button.grid(column=0, row=2, columnspan=2, pady=10)
 
     # Create the result labels
     probability_result_label = ttk.Label(root, text="Probability:")

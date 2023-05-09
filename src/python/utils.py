@@ -22,7 +22,7 @@ def calc_probability(data):
     return result
 
 # Load C++ functions
-hypothesis_testing_lib = ctypes.CDLL('path/to/your/compiled/cpp/library.so')
+hypothesis_testing_lib = ctypes.CDLL('./src/cpp/libhypothesis_testing.so')
 
 def hypothesis_testing(data):
     result = hypothesis_testing_lib.hypothesis_testing(ctypes.c_double(data))
