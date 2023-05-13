@@ -1,3 +1,4 @@
 cython
 rpy2
 rcpp
+pyqt5
