@@ -4,175 +4,185 @@
 # Created by William Brodhead
 #
 
-import tkinter as tk
-from tkinter import ttk
+import os
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtWidgets import QMainWindow, QLabel, QComboBox, QPushButton, QLineEdit, QGridLayout, QWidget, QVBoxLayout, QCheckBox, QHBoxLayout, QScrollArea
 
-# *****************************************************************************************************************
-# Main Frame
+# ************************************************************************************************************
+# Main Window
 
-class MainFrame(tk.Frame):
-    def __init__(self, master=None):
-        super().__init__(master)
-        self.grid(column=0, row=1, padx=10, pady=10, sticky="nsew")
-        self.create_widgets()
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super(MainWindow, self).__init__()
+        self.setWindowTitle("Statisticia")
+        self.main_widget = QWidget(self)
+        self.setCentralWidget(self.main_widget)
+        self.layout = QVBoxLayout(self.main_widget)
+        self.resize(800, 600)
 
-    def create_widgets(self):
-        # Create the about label
-        self.about_label = tk.Label(self, text="Statisticia is an application for statistical analysis.")
-        self.about_label.grid(column=0, row=0, padx=10, pady=10, sticky=tk.W)
+        self.about_label = QLabel("Statisticia is a Python-based statistical analysis application.")
+        self.layout.addWidget(self.about_label)
+        self.about_label.setAlignment(QtCore.Qt.AlignCenter)
 
-        # Create the dropdown menu
-        self.option_combobox = ttk.Combobox(self, values=["--", "Probability", "Confidence Interval", "Hypothesis Test"], state="readonly")
-        self.option_combobox.grid(column=0, row=1, padx=10, pady=10, sticky=tk.W)
-        self.option_combobox.current(0) # Set the default option to the first option
+        self.option_combobox = QComboBox(self)
+        self.option_combobox.addItems(["--", "Probability Tools", "Confidence Interval", "Hypothesis Testing", "Regression Analysis"])
+        self.layout.addWidget(self.option_combobox)
+        self.option_combobox.currentIndexChanged.connect(self.show_option_window)
+        self.option_combobox.setProperty("class", "option-combobox")
 
-        # Bind the dropdown menu to the on_option_change function
-        self.option_combobox.bind("<<ComboboxSelected>>", lambda event: self.show_subframe(self.option_combobox.get()))
+        self.setStyleSheet("""
+            QComboBox[class="option-combobox"] {
+                padding: 6px;
+                max-width:200px;
+            }
+        """)
 
-        # Create the option frame
-        self.option_frame = tk.Frame(self)
-        self.option_frame.grid(column=0, row=2, padx=10, pady=10, sticky="nsew")
+        self.option_window = QWidget(self)
+        self.layout.addWidget(self.option_window)
 
-    def show_subframe(self, frame_name):
-        for widget in self.option_frame.winfo_children():
-            widget.destroy() # Remove all widgets from the option frame when a new option is selected
-
-        if frame_name == "Probability":
-            probability_frame = Probability(self.option_frame)
-            probability_frame.grid(column=0, row=0, sticky="nsew")
-        elif frame_name == "Confidence Interval":
-            confidence_interval_frame = ConfidenceInterval(self.option_frame)
-            confidence_interval_frame.grid(column=0, row=0, sticky="nsew")
-        elif frame_name == "Hypothesis Test":
-            hypothesis_test_frame = HypothesisTest(self.option_frame)
-            hypothesis_test_frame.grid(column=0, row=0, sticky="nsew")
-
-
-# Show a frame in the main frame
-def on_option_change(event, option_combobox, main_frame):
-    selected_option = option_combobox.get()
-    main_frame.show_subframe(selected_option)
+    def show_option_window(self):
+        self.option_window.hide()
+        if self.option_combobox.currentText() == "Probability Tools":
+            self.option_window = ProbabilityToolsWindow()
+        elif self.option_combobox.currentText() == "Confidence Interval":
+            self.option_window = ConfidenceIntervalWindow()
+        elif self.option_combobox.currentText() == "Hypothesis Testing":
+            self.option_window = HypothesisTestingWindow()
+        elif self.option_combobox.currentText() == "Regression Analysis":
+            self.option_window = RegressionAnalysisWindow()
+        self.layout.addWidget(self.option_window)
 
 
-# *****************************************************************************************************************
-# Probability Frame
+# ************************************************************************************************************
+# Probability Tools
 
-class Probability(tk.Frame):
-    def __init__(self, master=None):
-        super().__init__(master)
-        self.master = master
-        self.create_widgets()
+class ProbabilityToolsWindow(QWidget):
+    def __init__(self):
+        super(ProbabilityToolsWindow, self).__init__()
+        self.layout = QVBoxLayout(self)
 
-    def create_widgets(self):
-        # Create the probability frame
-        self.formula_frame = tk.Frame(self)
-        self.formula_frame.grid(column=0, row=0, sticky=tk.W, columnspan=2)
+        # Formula input
+        self.formula_layout = QHBoxLayout()
+        self.layout.addLayout(self.formula_layout)
+        self.input_label = QLabel("Formula: ")
+        self.formula_layout.addWidget(self.input_label)
+        self.formula_input = QLineEdit()
+        self.formula_input.setFont(QtGui.QFont("Menlo", 12))
+        self.formula_layout.addWidget(self.formula_input)
+        self.formula_input.textChanged.connect(self.on_formula_input_change)
 
-        # Create the apply button
-        self.apply_button = tk.Button(self, text="Apply", command=self.on_apply)
-        self.apply_button.grid(column=0, row=4, padx=10, pady=10, sticky=tk.W)
+        # Probability inputs
+        self.probability_inputs = {}
+        self.probability_inputs_layout = QGridLayout()
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area_widget = QWidget()
+        self.scroll_area_widget.setLayout(self.probability_inputs_layout)
+        self.scroll_area.setWidget(self.scroll_area_widget)
+        self.layout.addWidget(self.scroll_area)
 
-        # Create the formula label and input
-        self.formula_label = tk.Label(self.formula_frame, text="Formula:")
-        self.formula_label.grid(column=0, row=0, sticky=tk.W)
-        self.formula_input = tk.Entry(self.formula_frame, width=20)
-        self.formula_input.grid(column=1, row=0, padx=(0, 10))
+        self.calculate_button = QPushButton("Calculate")
+        self.layout.addWidget(self.calculate_button)
+        self.calculate_button.clicked.connect(self.on_calculate)
 
-        # Bind the formula input to the on_formula_entry_change function
-        self.formula_input.bind('<KeyRelease>', self.on_formula_entry_change)
+        self.output_label = QLabel("")
+        self.layout.addWidget(self.output_label)
 
-        # Create the probability inputs frame
-        self.probability_inputs_frame = tk.Frame(self)
-        self.probability_inputs_frame.grid(column=0, row=3, padx=10, pady=10, sticky=tk.W, columnspan=2)
-        self.probability_inputs = {} # A dictionary of the probability input boxes
+        # Special symbols
+        self.special_symbols = {'∪': '∪', '∩': '∩', '|': '|'}
+        self.special_symbols_layout = QHBoxLayout()
+        self.formula_layout.addLayout(self.special_symbols_layout)
 
-        # Add special symbols
-        self.special_symbols_frame = tk.Frame(self)
-        self.special_symbols_frame.grid(column=0, row=2, ipadx=0, pady=10, sticky=tk.W, columnspan=2)
-        special_symbols = {'∪': '∪', '∩': '∩', '|': '|'} # Special symbols to add to the formula input
+        for i, (name, symbol) in enumerate(self.special_symbols.items()):
+            button = QPushButton(symbol)
+            button.setProperty("class", "special-symbol-button")
+            button.clicked.connect(lambda _, symbol=symbol: self.formula_input.insert(symbol))
+            self.special_symbols_layout.addWidget(button)
 
-        # Create the special symbol buttons
-        for i, (name, symbol) in enumerate(special_symbols.items()):
-            button = tk.Button(self.special_symbols_frame, text=name, command=lambda symbol=symbol: self.insert_symbol(symbol),
-                            width=1, height=2, font=('Courier', 13))
-            button.grid(column=i, row=0, sticky=tk.W)
+        self.special_symbols_layout.addStretch()
 
-    # Insert a symbol into the formula input
-    def insert_symbol(self, symbol): self.formula_input.insert(tk.INSERT, symbol)
+        self.setStyleSheet("""
+            QPushButton[class="special-symbol-button"] {
+                font-size: 15px;
+                padding: 6px;
+                margin: 0px;
+                min-width: 25px;
+                max-width: 25px;
+                min-height: 20px;
+                max-height: 20px;
+            }
+        """)
 
-    # Called when the apply button is pressed
-    def on_apply(self):
-        formula = self.formula_input.get()
-        probabilities = {letter: float(widgets["entry"].get()) for letter, widgets in self.probability_inputs.items()}
-
-        # Call the C++ function with the formula and probabilities
-        result = self.master.master.master.call_cpp(formula, probabilities)
-        print(result)  # For debugging
-
-    # Called when the formula input changes
-    def on_formula_entry_change(self, event):
-        formula = self.formula_input.get()
-        probability_letters = set([char for char in formula if char.isalpha()])
-
-        # Remove input boxes for probabilities that are no longer in the formula
-        for letter, widgets in list(self.probability_inputs.items()):
-            if letter not in probability_letters:
-                widgets["entry"].grid_remove()
-                widgets["label"].grid_remove()
-                del self.probability_inputs[letter]
+    def on_formula_input_change(self, text):
+        probability_letters = set([char for char in text if char.isalpha()])
 
         # Add input boxes for new probabilities in the formula
         for letter in probability_letters:
             if letter not in self.probability_inputs:
+                label = QLabel(f"P({letter}):")
                 row = len(self.probability_inputs)
-                label = tk.Label(self.probability_inputs_frame, text=f"P({letter}):")
-                label.grid(column=0, row=row, sticky=tk.W)
+                self.probability_inputs_layout.addWidget(label, row, 0)
 
-                entry = tk.Entry(self.probability_inputs_frame, width=5)
-                entry.grid(column=1, row=row)
-                self.probability_inputs[letter] = {'label': label, 'entry': entry}
+                entry = QLineEdit()
+                self.probability_inputs_layout.addWidget(entry, row, 1)
+                self.probability_inputs[letter] = (label, entry)
+
+        # Remove input boxes for probabilities that are no longer in the formula
+        for letter, (label, widget) in list(self.probability_inputs.items()):
+            if letter not in probability_letters:
+                self.probability_inputs_layout.removeWidget(label)
+                label.deleteLater()
+
+                self.probability_inputs_layout.removeWidget(widget)
+                widget.deleteLater()
+
+                del self.probability_inputs[letter]
+
+    def on_calculate(self):
+        formula = self.formula_input.text()
+        probabilities = {letter: float(widget.text()) for letter, (label, widget) in self.probability_inputs.items()}
+
+        
+
+        print(formula, probabilities)  # For debugging
+
+# ************************************************************************************************************
+# Confidence Interval
+
+class ConfidenceIntervalWindow(QWidget):
+    def __init__(self):
+        super(ConfidenceIntervalWindow, self).__init__()
+        self.layout = QGridLayout(self)
+
+        self.two_tailed_checkbox = QCheckBox("Two-tailed")
+        self.layout.addWidget(self.two_tailed_checkbox)
+
+        self.input_label = QLabel("")
 
 
-# *****************************************************************************************************************
-# Confidence Interval Frame
+# ************************************************************************************************************
+# Hypothesis Testing
 
-class ConfidenceInterval(tk.Frame):
-    def __init__(self, master=None):
-        super().__init__(master)
-        self.master = master
-        self.create_widgets()
-
-    def create_widgets(self):
-        pass
-        # Add your confidence interval-specific widgets here
+class HypothesisTestingWindow(QWidget):
+    def __init__(self):
+        super(HypothesisTestingWindow, self).__init__()
+        self.layout = QGridLayout(self)
 
 
-# *****************************************************************************************************************
-# Hypothesis Test Frame
+# ************************************************************************************************************
+# Regression Analysis
 
-class HypothesisTest(tk.Frame):
-    def __init__(self, master=None):
-        super().__init__(master)
-        self.master = master
-        self.create_widgets()
-
-    def create_widgets(self):
-        pass
-        # Add your hypothesis test-specific widgets here
+class RegressionAnalysisWindow(QWidget):
+    def __init__(self):
+        super(RegressionAnalysisWindow, self).__init__()
+        self.layout = QGridLayout(self)
 
 
-# *****************************************************************************************************************
+# ************************************************************************************************************
 # Create GUI
 
 def create_gui():
-    # Create the main window
-    root = tk.Tk()
-    root.title("Statisticia")
-    root.geometry("800x600")
-
-    # Create the main frame
-    main_frame = MainFrame(root)
-
-    # Start the main event loop
-    root.mainloop()
-create_gui()
+    app = QtWidgets.QApplication([])
+    window = MainWindow()
+    window.show()
+    app.exec_()
